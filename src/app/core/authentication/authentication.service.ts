@@ -1,6 +1,6 @@
 /** Angular Imports */
-import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import {Injectable, OnInit} from '@angular/core';
+import {HttpClient, HttpHeaders, HttpParams} from '@angular/common/http';
 
 /** rxjs Imports */
 import { Observable, of } from 'rxjs';
@@ -19,12 +19,16 @@ import { environment } from '../../../environments/environment';
 import { LoginContext } from './login-context.model';
 import { Credentials } from './credentials.model';
 import { OAuth2Token } from './o-auth2-token.model';
+import {OAuthService} from 'angular-oauth2-oidc';
+import {getToken} from 'codelyzer/angular/styles/cssLexer';
+import {authCodeFlowConfig} from '../../sso-config';
+import {JwksValidationHandler} from 'angular-oauth2-oidc-jwks';
 
 /**
  * Authentication workflow.
  */
 @Injectable()
-export class AuthenticationService {
+export class AuthenticationService implements OnInit {
 
   /** Denotes whether the user credentials should persist through sessions. */
   private rememberMe: boolean;
@@ -53,8 +57,22 @@ export class AuthenticationService {
    * @param {AlertService} alertService Alert Service.
    * @param {AuthenticationInterceptor} authenticationInterceptor Authentication Interceptor.
    */
+
+  ngOnInit(): void {
+    this.configSSO();
+  }
+
+  configSSO() {
+    this.oauthService.configure(authCodeFlowConfig);
+    this.oauthService.tokenValidationHandler = new JwksValidationHandler();
+    this.oauthService.loadDiscoveryDocumentAndTryLogin();
+    this.getUserDetailsByToken();
+  }
+
+
   constructor(private http: HttpClient,
               private alertService: AlertService,
+              private oauthService: OAuthService,
               private authenticationInterceptor: AuthenticationInterceptor) {
     this.rememberMe = false;
     this.storage = sessionStorage;
@@ -93,6 +111,8 @@ export class AuthenticationService {
       httpParams = httpParams.set('client_id', 'community-app');
       httpParams = httpParams.set('grant_type', 'password');
       httpParams = httpParams.set('client_secret', '123');
+      httpParams = httpParams.set('username', loginContext.username);
+      httpParams = httpParams.set('password', loginContext.password);
       return this.http.disableApiPrefix().post(`${environment.oauth.serverUrl}/oauth/token`, {}, { params: httpParams })
         .pipe(
           map((tokenResponse: OAuth2Token) => {
@@ -111,6 +131,10 @@ export class AuthenticationService {
     }
   }
 
+  get token() {
+    const claims: any = this.oauthService.getIdentityClaims();
+    return claims ? claims : null;
+  }
   /**
    * Retrieves the user details after oauth2 authentication.
    *
@@ -125,6 +149,19 @@ export class AuthenticationService {
         this.onLoginSuccess(credentials);
         if (!credentials.shouldRenewPassword) {
           this.storage.setItem(this.oAuthTokenDetailsStorageKey, JSON.stringify(tokenResponse));
+        }
+      });
+  }
+  public getUserDetailsByToken() {
+    const access_token = this.oauthService.getAccessToken();
+    alert('access_token' + access_token);
+    const httpHeader = new HttpHeaders().set('bearer ', access_token).set('Fineract-Platform-TenantId', 'default').set('Content-Type', 'application/json');
+    // this.refreshTokenOnExpiry(tokenResponse.expires_in);
+    this.http.get('/userdetails', { headers: httpHeader })
+      .subscribe((credentials: Credentials) => {
+        this.onLoginSuccess(credentials);
+        if (!credentials.shouldRenewPassword) {
+          this.storage.setItem(this.oAuthTokenDetailsStorageKey, JSON.stringify(access_token));
         }
       });
   }

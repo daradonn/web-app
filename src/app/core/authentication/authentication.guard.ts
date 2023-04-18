@@ -5,6 +5,7 @@ import { Router, CanActivate } from '@angular/router';
 /** Custom Services */
 import { Logger } from '../logger/logger.service';
 import { AuthenticationService } from './authentication.service';
+import {OAuthService} from 'angular-oauth2-oidc';
 
 /** Initialize logger */
 const log = new Logger('AuthenticationGuard');
@@ -20,7 +21,8 @@ export class AuthenticationGuard implements CanActivate {
    * @param {AuthenticationService} authenticationService Authentication Service.
    */
   constructor(private router: Router,
-              private authenticationService: AuthenticationService) { }
+              private authenticationService: AuthenticationService,
+              private  oauthService: OAuthService) { }
 
   /**
    * Ensures route access is authorized only when user is authenticated, otherwise redirects to login.
@@ -28,6 +30,17 @@ export class AuthenticationGuard implements CanActivate {
    * @returns {boolean} True if user is authenticated.
    */
   canActivate(): boolean {
+    const hasIdToken = this.oauthService.hasValidIdToken();
+    const hasAccessToken = this.oauthService.hasValidAccessToken();
+    const accessToken = this.oauthService.getAccessToken();
+    alert('accessToken ' + accessToken);
+    if (hasIdToken && hasAccessToken) {
+      return true;
+    } else {
+      // this.oauthService.logOut();
+      this.router.navigate(['/login'], { replaceUrl: true });
+      return false;
+    }
     if (this.authenticationService.isAuthenticated()) {
       return true;
     }

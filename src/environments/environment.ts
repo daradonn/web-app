@@ -23,12 +23,22 @@ export const environment = {
   apiVersion: window['env']['apiVersion'] || '/v1',
   serverUrl: '',
   oauth: {
-    enabled: false,  // For connecting to Mifos X using OAuth2 Authentication change the value to true
-    serverUrl: ''
+    enabled: true,  // For connecting to Mifos X using OAuth2 Authentication change the value to true
+    serverUrl: '',
+    loginUrl: 'http://localhost:9000'
   },
   defaultLanguage: window['env']['defaultLanguage'] || 'en-US',
   supportedLanguages: window['env']['supportedLanguages'] || 'en-US,es-MX,fr-FR',
-  preloadClients: window['env']['preloadClients'] || true
+  preloadClients: window['env']['preloadClients'] || true,
+  keycloak: {
+    issuer: 'http://localhost:9000/realms/fineract',
+    redirectUri: 'http://localhost:4200/',
+    clientId: 'web-app',
+    // issuer: 'https://idsvr4.azurewebsites.net',
+    // redirectUri: window.location.origin + '/index.html',
+    // clientId: 'spa',
+    scope: 'openid profile email offline_access'
+  }
 };
 
 // Server URL

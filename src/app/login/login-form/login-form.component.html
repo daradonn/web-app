@@ -37,5 +37,13 @@
   <button type="button" mat-button fxFlexAlign="center" class="login-button" (click)="forgotPassword()" [disabled]="loading">
     {{ 'labels.links.Forgot Password?' | translate }}
   </button>
+  <button mat-raised-button color="primary" fxFlexAlign="center" (click)="logout()">
+    Logout
+    <mat-spinner [diameter]="20" *ngIf="loading"></mat-spinner>
+  </button>
+  <button mat-raised-button color="primary" fxFlexAlign="center" (click)="token()">
+    Token
+    <mat-spinner [diameter]="20" *ngIf="loading"></mat-spinner>
+  </button>
 
 </form>

@@ -7,6 +7,9 @@ import { finalize } from 'rxjs/operators';
 
 /** Custom Services */
 import { AuthenticationService } from '../../core/authentication/authentication.service';
+import {OAuthService} from 'angular-oauth2-oidc';
+import {JwksValidationHandler} from 'angular-oauth2-oidc-jwks';
+import {authCodeFlowConfig} from '../../sso-config';
 
 /**
  * Login form component.
@@ -28,9 +31,11 @@ export class LoginFormComponent implements OnInit {
   /**
    * @param {FormBuilder} formBuilder Form Builder.
    * @param {AuthenticationService} authenticationService Authentication Service.
+   * @param oauthService
    */
   constructor(private formBuilder: FormBuilder,
-              private authenticationService: AuthenticationService) {  }
+              private authenticationService: AuthenticationService,
+              private oauthService: OAuthService) {  }
 
   /**
    * Creates login form.
@@ -38,14 +43,43 @@ export class LoginFormComponent implements OnInit {
    * Initializes password input field type.
    */
   ngOnInit() {
+    this.configSSO();
     this.createLoginForm();
     this.passwordInputType = 'password';
+    // this.authenticationService.getUserDetailsByToken();
   }
+
+  configSSO() {
+    this.oauthService.configure(authCodeFlowConfig);
+    this.oauthService.tokenValidationHandler = new JwksValidationHandler();
+    this.oauthService.loadDiscoveryDocumentAndTryLogin();
+    this.oauthService.setStorage(localStorage);
+
+  }
+
 
   /**
    * Authenticates the user if the credentials are valid.
    */
   login() {
+    this.loading = true;
+    this.loginForm.disable();
+    this.oauthService.initCodeFlow();
+  }
+
+  logout() {
+    this.oauthService.logOut();
+    // this.router.navigate(['/login'], { replaceUrl: true });
+  }
+
+  get token() {
+    const claims: any = this.oauthService.getIdentityClaims();
+    alert(claims);
+    return claims ? claims : null;
+  }
+
+
+  loginBack() {
     this.loading = true;
     this.loginForm.disable();
     this.authenticationService.login(this.loginForm.value)
