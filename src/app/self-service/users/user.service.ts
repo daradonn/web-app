@@ -51,7 +51,7 @@ export class UserService {
    * TODO: Mock data to be replaced once API is available.
    */
   getUser(): Observable<any> {
-    return this.http.disableApiPrefix().get('/assets/mock/user.mock.json');
+    return this.http.get('/assets/mock/user.mock.json');
   }
 
   /**

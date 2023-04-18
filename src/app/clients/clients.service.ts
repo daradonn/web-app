@@ -160,7 +160,7 @@ export class ClientsService {
 
   getClientProfileImage(clientId: string) {
     const httpParams = new HttpParams().set('maxHeight', '150');
-    return this.http.skipErrorHandler().get(`/clients/${clientId}/images`, { params: httpParams, responseType: 'text' });
+    return this.http.get(`/clients/${clientId}/images`, { params: httpParams, responseType: 'text' });
   }
 
   uploadClientProfileImage(clientId: string, image: File) {
