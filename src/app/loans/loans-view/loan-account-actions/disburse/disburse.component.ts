@@ -54,7 +54,7 @@ export class DisburseComponent implements OnInit {
    * and initialize with the required values
    */
   ngOnInit() {
-    this.maxDate = this.settingsService.maxFutureDate;
+    this.maxDate = this.settingsService.businessDate;
     this.createDisbursementLoanForm();
     this.setDisbursementLoanDetails();
   }

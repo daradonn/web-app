@@ -65,7 +65,7 @@ export class ApproveLoanComponent implements OnInit {
    */
   setApproveLoanForm() {
     this.approveLoanForm = this.formBuilder.group({
-      'approvedOnDate': [this.settingsService.businessDate, Validators.required],
+      'approvedOnDate': [this.loanData.approvalDate && new Date(this.loanData.approvalDate), Validators.required],
       'expectedDisbursementDate': [''],
       'approvedLoanAmount': [this.loanData.approvalAmount, Validators.required],
       'note': ['']
