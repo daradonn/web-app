@@ -97,7 +97,8 @@ export class ToolbarComponent implements OnInit, AfterViewInit {
    */
   logout() {
     this.authenticationService.logout()
-      .subscribe(() => this.router.navigate(['/login'], { replaceUrl: true }));
+      // .subscribe(() => this.router.navigate(['/login'], { replaceUrl: true }));
+      .subscribe(() => this.router.navigate(['/login']));
   }
 
   /**

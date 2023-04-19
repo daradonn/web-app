@@ -43,7 +43,7 @@ export class LoginFormComponent implements OnInit {
    * Initializes password input field type.
    */
   ngOnInit() {
-    this.configSSO();
+    // this.configSSO();
     this.createLoginForm();
     this.passwordInputType = 'password';
     // this.authenticationService.getUserDetailsByToken();
@@ -52,8 +52,8 @@ export class LoginFormComponent implements OnInit {
   configSSO() {
     this.oauthService.configure(authCodeFlowConfig);
     this.oauthService.tokenValidationHandler = new JwksValidationHandler();
-    this.oauthService.loadDiscoveryDocumentAndTryLogin();
-    this.oauthService.setStorage(localStorage);
+    this.oauthService.loadDiscoveryDocumentAndTryLogin().then(r => this.oauthService.tryLogin());
+    // this.oauthService.setStorage(localStorage);
 
   }
 
@@ -61,10 +61,9 @@ export class LoginFormComponent implements OnInit {
   /**
    * Authenticates the user if the credentials are valid.
    */
-  login() {
-    this.loading = true;
-    this.loginForm.disable();
-    this.oauthService.initCodeFlow();
+  loginSSO() {
+    // this.oauthService.initCodeFlow();
+    this.oauthService.initLoginFlow();
   }
 
   logout() {
@@ -73,13 +72,13 @@ export class LoginFormComponent implements OnInit {
   }
 
   get token() {
-    const claims: any = this.oauthService.getIdentityClaims();
+    const claims: any = this.oauthService.getAccessToken();
     alert(claims);
     return claims ? claims : null;
   }
 
 
-  loginBack() {
+  login() {
     this.loading = true;
     this.loginForm.disable();
     this.authenticationService.login(this.loginForm.value)

@@ -2,7 +2,7 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { HttpClient, HttpClientModule } from '@angular/common/http';
+import {HttpClient, HttpClientModule, provideHttpClient} from '@angular/common/http';
 
 /** Environment Configuration */
 
@@ -42,7 +42,7 @@ import { AppRoutingModule } from './app-routing.module';
 import { DatePipe, LocationStrategy } from '@angular/common';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
-import {OAuthModule} from 'angular-oauth2-oidc';
+import {provideOAuthClient} from 'angular-oauth2-oidc';
 
 /**
  * App Module
@@ -86,11 +86,10 @@ import {OAuthModule} from 'angular-oauth2-oidc';
     CollectionsModule,
     TasksModule,
     ConfigurationWizardModule,
-    AppRoutingModule,
-    OAuthModule.forRoot(),
+    AppRoutingModule
   ],
   declarations: [WebAppComponent, NotFoundComponent],
-  providers: [DatePipe],
+  providers: [DatePipe,  provideHttpClient(), provideOAuthClient()],
   bootstrap: [WebAppComponent]
 })
 export class AppModule { }

@@ -25,6 +25,9 @@ import { SettingsService } from './settings/settings.service';
 import { Alert } from './core/alert/alert.model';
 import { KeyboardShortcutsConfiguration } from './keyboards-shortcut-config';
 import { Dates } from './core/utils/dates';
+import {authCodeFlowConfig} from './sso-config';
+import {JwksValidationHandler} from 'angular-oauth2-oidc-jwks';
+import {OAuthService} from 'angular-oauth2-oidc';
 
 /** Initialize Logger */
 const log = new Logger('MifosX');
@@ -57,13 +60,16 @@ export class WebAppComponent implements OnInit {
   constructor(private router: Router,
               private activatedRoute: ActivatedRoute,
               private titleService: Title,
+              private oauthService: OAuthService,
               private translateService: TranslateService,
               private themeStorageService: ThemeStorageService,
               public snackBar: MatSnackBar,
               private alertService: AlertService,
               private settingsService: SettingsService,
               private authenticationService: AuthenticationService,
-              private dateUtils: Dates) { }
+              private dateUtils: Dates) {
+    this.configSSO();
+  }
 
   /**
    * Initial Setup:
@@ -155,9 +161,15 @@ export class WebAppComponent implements OnInit {
     this.settingsService.setTenantIdentifiers(environment.fineractPlatformTenantIds.split(','));
   }
 
+  configSSO() {
+    this.oauthService.configure(authCodeFlowConfig);
+    this.oauthService.tokenValidationHandler = new JwksValidationHandler();
+    this.oauthService.loadDiscoveryDocumentAndTryLogin();
+  }
   logout() {
     this.authenticationService.logout()
-      .subscribe(() => this.router.navigate(['/login'], { replaceUrl: true }));
+      .subscribe(() => this.router.navigate(['/login']));
+      // .subscribe(() => this.router.navigate(['/login'], { replaceUrl: true }));
   }
 
   help() {

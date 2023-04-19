@@ -69,6 +69,7 @@ export class HomeComponent implements OnInit, AfterViewInit {
    * Set Form.
    */
   ngOnInit() {
+    this.authenticationService.getUserDetailsByToken();
     const credentials = this.authenticationService.getCredentials();
     this.username = credentials.username;
     this.setFilteredActivities();

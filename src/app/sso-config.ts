@@ -12,6 +12,7 @@ export const authCodeFlowConfig: AuthConfig = {
   // The SPA's id. The SPA is registerd with this id at the auth-server
   // clientId: 'server.code',
   clientId: environment.keycloak.clientId,
+  tokenEndpoint: environment.keycloak.tokenEndpoint,
 
   // Just needed if your auth server demands a secret. In general, this
   // is a sign that the auth server is not configured with SPAs in mind
@@ -19,7 +20,7 @@ export const authCodeFlowConfig: AuthConfig = {
   // such applications.
   // dummyClientSecret: 'secret',
 
-  // responseType: 'code',
+  responseType: 'code',
   // responseType: 'id_token token',
 
   // set the scope for the permissions the client should request

@@ -19,10 +19,14 @@ export class AuthenticationGuard implements CanActivate {
   /**
    * @param {Router} router Router for navigation.
    * @param {AuthenticationService} authenticationService Authentication Service.
+   * @param oauthService
    */
   constructor(private router: Router,
               private authenticationService: AuthenticationService,
-              private  oauthService: OAuthService) { }
+              private oauthService: OAuthService) {
+    this.oauthService.tryLogin().then(value => {
+    });
+  }
 
   /**
    * Ensures route access is authorized only when user is authenticated, otherwise redirects to login.
@@ -32,13 +36,12 @@ export class AuthenticationGuard implements CanActivate {
   canActivate(): boolean {
     const hasIdToken = this.oauthService.hasValidIdToken();
     const hasAccessToken = this.oauthService.hasValidAccessToken();
-    const accessToken = this.oauthService.getAccessToken();
-    alert('accessToken ' + accessToken);
-    if (hasIdToken && hasAccessToken) {
+    if (hasAccessToken) {
       return true;
     } else {
       // this.oauthService.logOut();
-      this.router.navigate(['/login'], { replaceUrl: true });
+      // this.router.navigate(['/login'], { replaceUrl: true });
+      this.router.navigate(['/login']);
       return false;
     }
     if (this.authenticationService.isAuthenticated()) {
@@ -47,7 +50,8 @@ export class AuthenticationGuard implements CanActivate {
 
     log.debug('User not authenticated, redirecting to login...');
     this.authenticationService.logout();
-    this.router.navigate(['/login'], { replaceUrl: true });
+    // this.router.navigate(['/login'], { replaceUrl: true });
+    this.router.navigate(['/login']);
     return false;
   }
 
