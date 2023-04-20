@@ -1,6 +1,6 @@
 /** Angular Imports */
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import {HttpClient, HttpHeaders, HttpParams} from '@angular/common/http';
 
 /** rxjs Imports */
 import { Observable, of } from 'rxjs';
@@ -19,6 +19,9 @@ import { environment } from '../../../environments/environment';
 import { LoginContext } from './login-context.model';
 import { Credentials } from './credentials.model';
 import { OAuth2Token } from './o-auth2-token.model';
+import {OAuthService} from 'angular-oauth2-oidc';
+import {authCodeFlowConfig} from '../../sso-config';
+import {JwksValidationHandler} from 'angular-oauth2-oidc-jwks';
 
 /**
  * Authentication workflow.
@@ -55,6 +58,7 @@ export class AuthenticationService {
    */
   constructor(private http: HttpClient,
               private alertService: AlertService,
+              private oauthService: OAuthService,
               private authenticationInterceptor: AuthenticationInterceptor) {
     this.rememberMe = false;
     this.storage = sessionStorage;
@@ -92,8 +96,11 @@ export class AuthenticationService {
       let httpParams = new HttpParams();
       httpParams = httpParams.set('client_id', 'community-app');
       httpParams = httpParams.set('grant_type', 'password');
-      httpParams = httpParams.set('client_secret', '123');
-      return this.http.disableApiPrefix().post(`${environment.oauth.serverUrl}/oauth/token`, {}, { params: httpParams })
+      httpParams = httpParams.set('client_secret', environment.keycloak.clientSecret);
+      httpParams = httpParams.set('username', loginContext.username );
+      httpParams = httpParams.set('password', loginContext.password );
+      const httpHeader = new HttpHeaders().set('Content-Type', 'application/x-www-form-urlencoded');
+      return this.http.post(environment.keycloak.tokenEndpoint, httpParams.toString(), { headers: httpHeader })
         .pipe(
           map((tokenResponse: OAuth2Token) => {
             this.getUserDetails(tokenResponse);
@@ -118,9 +125,9 @@ export class AuthenticationService {
    * @param {OAuth2Token} tokenResponse OAuth2 Token details.
    */
   private getUserDetails(tokenResponse: OAuth2Token) {
-    const httpParams = new HttpParams().set('access_token', tokenResponse.access_token);
     this.refreshTokenOnExpiry(tokenResponse.expires_in);
-    this.http.get('/userdetails', { params: httpParams })
+    const httpHeader = new HttpHeaders().set('Authorization', 'bearer ' + tokenResponse.access_token).set('Fineract-Platform-TenantId', 'default').set('Content-Type', 'application/json');
+    this.http.get('/userdetails', { headers: httpHeader })
       .subscribe((credentials: Credentials) => {
         this.onLoginSuccess(credentials);
         if (!credentials.shouldRenewPassword) {
@@ -137,18 +144,40 @@ export class AuthenticationService {
     setTimeout(() => this.refreshOAuthAccessToken(), expiresInTime * 1000);
   }
 
+  private configure() {
+    this.oauthService.configure(authCodeFlowConfig);
+    this.oauthService.tokenValidationHandler = new JwksValidationHandler();
+    this.oauthService.loadDiscoveryDocumentAndTryLogin().then(r => {
+      this.oauthService.tryLogin();
+ /*     const token = this.oauthService.getAccessToken();
+      this.getUserDetailsByToken(token);*/
+    });
+  }
+
   /**
    * Refreshes the oauth2 authorization token.
    */
+  private refreshOAuthAccessTokenBK() {
+    this.configure();
+    this.oauthService.refreshToken().then(value => {
+      this.storage.setItem(this.oAuthTokenDetailsStorageKey, JSON.stringify(value));
+      this.authenticationInterceptor.setAuthorizationToken(value.access_token);
+      this.refreshTokenOnExpiry(value.expires_in);
+      const credentials = JSON.parse(this.storage.getItem(this.credentialsStorageKey));
+      credentials.accessToken = value.access_token;
+      this.storage.setItem(this.credentialsStorageKey, JSON.stringify(credentials));
+    });
+  }
   private refreshOAuthAccessToken() {
     const oAuthRefreshToken = JSON.parse(this.storage.getItem(this.oAuthTokenDetailsStorageKey)).refresh_token;
     this.authenticationInterceptor.removeAuthorization();
     let httpParams = new HttpParams();
     httpParams = httpParams.set('client_id', 'community-app');
     httpParams = httpParams.set('grant_type', 'refresh_token');
-    httpParams = httpParams.set('client_secret', '123');
+    httpParams = httpParams.set('client_secret', environment.keycloak.clientSecret);
     httpParams = httpParams.set('refresh_token', oAuthRefreshToken);
-    this.http.disableApiPrefix().post(`${environment.oauth.serverUrl}/oauth/token`, {}, { params: httpParams })
+    const httpHeader = new HttpHeaders().set('Content-Type', 'application/x-www-form-urlencoded');
+    this.http.post(environment.keycloak.tokenEndpoint, httpParams.toString(), { headers: httpHeader })
       .subscribe((tokenResponse: OAuth2Token) => {
         this.storage.setItem(this.oAuthTokenDetailsStorageKey, JSON.stringify(tokenResponse));
         this.authenticationInterceptor.setAuthorizationToken(tokenResponse.access_token);
@@ -195,6 +224,7 @@ export class AuthenticationService {
    * @returns {Observable<boolean>} True if the user was logged out successfully.
    */
   logout(): Observable<boolean> {
+    this.oauthService.revokeTokenAndLogout();
     const twoFactorToken = JSON.parse(this.storage.getItem(this.twoFactorAuthenticationTokenStorageKey));
     if (twoFactorToken) {
       this.http.post('/twofactor/invalidate', { token: twoFactorToken.token }).subscribe();
@@ -204,7 +234,17 @@ export class AuthenticationService {
     this.setCredentials();
     return of(true);
   }
-
+  public getUserDetailsByToken(access_token: string) {
+    const httpHeader = new HttpHeaders().set('Authorization', 'bearer ' + access_token).set('Fineract-Platform-TenantId', 'default').set('Content-Type', 'application/json');
+    // this.refreshTokenOnExpiry(tokenResponse.expires_in);
+    this.http.get('/userdetails', { headers: httpHeader })
+      .subscribe((credentials: Credentials) => {
+        this.onLoginSuccess(credentials);
+        if (!credentials.shouldRenewPassword) {
+          this.storage.setItem(this.oAuthTokenDetailsStorageKey, JSON.stringify(access_token));
+        }
+      });
+  }
   /**
    * Checks if the two factor access token for authenticated user is valid.
    * @returns {boolean} True if the two factor access token is valid or two factor authentication is not required.

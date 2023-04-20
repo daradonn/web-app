@@ -25,6 +25,9 @@ import { SettingsService } from './settings/settings.service';
 import { Alert } from './core/alert/alert.model';
 import { KeyboardShortcutsConfiguration } from './keyboards-shortcut-config';
 import { Dates } from './core/utils/dates';
+import {OAuthService} from 'angular-oauth2-oidc';
+import {JwksValidationHandler} from 'angular-oauth2-oidc-jwks';
+import {authCodeFlowConfig} from './sso-config';
 
 /** Initialize Logger */
 const log = new Logger('MifosX');
@@ -63,7 +66,16 @@ export class WebAppComponent implements OnInit {
               private alertService: AlertService,
               private settingsService: SettingsService,
               private authenticationService: AuthenticationService,
-              private dateUtils: Dates) { }
+              private oauthService: OAuthService,
+              private dateUtils: Dates) {
+    this.configure();
+  }
+
+  private configure() {
+    this.oauthService.configure(authCodeFlowConfig);
+    this.oauthService.tokenValidationHandler = new JwksValidationHandler();
+    this.oauthService.loadDiscoveryDocumentAndTryLogin();
+  }
 
   /**
    * Initial Setup:

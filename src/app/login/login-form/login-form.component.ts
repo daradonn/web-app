@@ -7,6 +7,7 @@ import { finalize } from 'rxjs/operators';
 
 /** Custom Services */
 import { AuthenticationService } from '../../core/authentication/authentication.service';
+import {OAuthService} from 'angular-oauth2-oidc';
 
 /**
  * Login form component.
@@ -30,6 +31,7 @@ export class LoginFormComponent implements OnInit {
    * @param {AuthenticationService} authenticationService Authentication Service.
    */
   constructor(private formBuilder: FormBuilder,
+              private oauthService: OAuthService,
               private authenticationService: AuthenticationService) {  }
 
   /**
@@ -57,7 +59,10 @@ export class LoginFormComponent implements OnInit {
         this.loading = false;
       })).subscribe();
   }
-
+  public loginSSO() {
+    this.oauthService.initLoginFlow();
+    this.oauthService.tryLogin();
+  }
   /**
    * TODO: Decision to be taken on providing this feature.
    */

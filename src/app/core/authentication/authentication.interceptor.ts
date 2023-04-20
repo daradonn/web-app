@@ -33,6 +33,15 @@ export class AuthenticationInterceptor implements HttpInterceptor {
    * Intercepts a Http request and sets the request headers.
    */
   intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+    if (request.url.includes(':9000')) {
+      return next.handle(request);
+    } else {
+      if (this.settingsService.tenantIdentifier) {
+        httpOptions.headers['Fineract-Platform-TenantId'] = this.settingsService.tenantIdentifier;
+      }
+      request = request.clone({ setHeaders: httpOptions.headers });
+      return next.handle(request);
+    }
     if (this.settingsService.tenantIdentifier) {
       httpOptions.headers['Fineract-Platform-TenantId'] = this.settingsService.tenantIdentifier;
     }

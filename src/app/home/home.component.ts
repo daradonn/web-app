@@ -18,6 +18,7 @@ import { ConfigurationWizardService } from '../configuration-wizard/configuratio
 
 /** Custom Components */
 import { NextStepDialogComponent } from '../configuration-wizard/next-step-dialog/next-step-dialog.component';
+import {OAuthService} from 'angular-oauth2-oidc';
 
 /**
  * Home component.
@@ -58,11 +59,18 @@ export class HomeComponent implements OnInit, AfterViewInit {
    * @param {PopoverService} popoverService PopoverService.
    */
   constructor(private authenticationService: AuthenticationService,
+              private oauthService: OAuthService,
               private activatedRoute: ActivatedRoute,
               private router: Router,
               private dialog: MatDialog,
               private configurationWizardService: ConfigurationWizardService,
-              private popoverService: PopoverService) { }
+              private popoverService: PopoverService) {
+    const hasValidToken = this.oauthService.hasValidAccessToken();
+    if (hasValidToken ) {
+      const token = this.oauthService.getAccessToken();
+      this.authenticationService.getUserDetailsByToken(token);
+    }
+  }
 
   /**
    * Sets the username of the authenticated user.

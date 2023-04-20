@@ -42,6 +42,7 @@ import { AppRoutingModule } from './app-routing.module';
 import { DatePipe, LocationStrategy } from '@angular/common';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
+import {OAuthModule} from 'angular-oauth2-oidc';
 
 /**
  * App Module
@@ -86,6 +87,7 @@ import { TranslateHttpLoader } from '@ngx-translate/http-loader';
     TasksModule,
     ConfigurationWizardModule,
     AppRoutingModule,
+    OAuthModule.forRoot()
   ],
   declarations: [WebAppComponent, NotFoundComponent],
   providers: [DatePipe],
